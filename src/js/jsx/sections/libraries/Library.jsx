@@ -53,9 +53,12 @@ define(function (require, exports, module) {
         },
 
         render: function () {
+            var currentLibrary = this.props.library;
+
+            
             return (
-                <div >
-                    PUT LIBRARY HERE
+                <div>
+                    {currentLibrary ? currentLibrary.name : ""}
                 </div>
             );
         }

@@ -29,7 +29,8 @@ define(function (require, exports, module) {
         Fluxxor = require("fluxxor"),
         FluxMixin = Fluxxor.FluxMixin(React),
         StoreWatchMixin = Fluxxor.StoreWatchMixin,
-        classnames = require("classnames");
+        classnames = require("classnames"),
+        _ = require("lodash");
 
     var TitleHeader = require("jsx!js/jsx/shared/TitleHeader"),
         LibraryList = require("jsx!./LibraryList"),
@@ -77,16 +78,6 @@ define(function (require, exports, module) {
             return true;
         },
 
-        /**
-         * Workaround a CEF bug by clearing any active tooltips when scrolling.
-         * More details here: https://github.com/adobe-photoshop/spaces-design/issues/444
-         *
-         * @private
-         */
-        _handleScroll: function () {
-            this._setTooltipThrottled("");
-        },
-
         _handleLibraryChange: function (libraryID) {
             this.setState({
                 selectedLibrary: libraryID
@@ -94,7 +85,8 @@ define(function (require, exports, module) {
         },
 
         render: function () {
-            var libraries = this.state.libraries;
+            var libraries = this.state.libraries,
+                currentLibrary = _.find(libraries, "id", this.state.selectedLibrary);
 
             var containerClasses = classnames({
                 "section-container": true,
@@ -128,9 +120,8 @@ define(function (require, exports, module) {
                                 />
                         </SplitButtonList>
                     </div>
-                    <Library 
-                        libraries={libraries}
-                        selected={this.state.selectedLibrary}
+                    <Library
+                        library={currentLibrary}
                     />
                     <LibraryBar />
                 </div>
