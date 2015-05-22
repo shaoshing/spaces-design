@@ -24,42 +24,22 @@
 define(function (require, exports) {
     "use strict";
 
-    /**
-     * The master set of store constructors.
-     * 
-     * @private
-     * @type {Object.<string, function()>}
-     */
-    var _imports = {
-        "application": require("./application"),
-        "document": require("./document"),
-        "font": require("./font"),
-        "tool": require("./tool"),
-        "policy": require("./policy"),
-        "menu": require("./menu"),
-        "preferences": require("./preferences"),
-        "ui": require("./ui"),
-        "shortcut": require("./shortcut"),
-        "example-one": require("./example-one"),
-        "example-two": require("./example-two"),
-        "dialog": require("./dialog"),
-        "history": require("./history"),
-        "draganddrop": require("./draganddrop"),
-        "library": require("./library")
-    };
+    var Promise = require("bluebird");
+
+    var events = require("../events");
 
     /**
-     * Builds a set of instantiated store objects.
+     * After startup, load the libraries
      * 
-     * @return {Object.<string, Fluxxor.Store>}
+     * @return {Promise}
      */
-    var create = function () {
-        return Object.keys(_imports).reduce(function (stores, key) {
-            var Store = _imports[key];
-            stores[key] = new Store();
-            return stores;
-        }, {});
-    };
+    var afterStartup = function () {
+        this.dispatch(events.libraries.FAKE_DATA, {});
 
-    exports.create = create;
+        return Promise.resolve();
+    };
+    afterStartup.reads = [];
+    afterStartup.writes = [];
+
+    exports.afterStartup = afterStartup;
 });

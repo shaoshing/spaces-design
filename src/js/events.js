@@ -144,6 +144,9 @@ define(function (require, exports, module) {
             REGISTER_DRAGGING: "registerDragging",
             STOP_DRAGGING: "stopDragging",
             MOVE_AND_CHECK_BOUNDS: "moveAndCheckBounds"
+        },
+        libraries: {
+            FAKE_DATA: "librariesFakeData"
         }
     };
 });

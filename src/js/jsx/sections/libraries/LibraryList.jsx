@@ -21,34 +21,32 @@
  * 
  */
 
+
 define(function (require, exports, module) {
     "use strict";
 
-    // namespaced raw (unsynchronized) actions
-    module.exports = {
-        application: require("./application"),
-        dialog: require("./dialog"),
-        documents: require("./documents"),
-        draganddrop: require("./draganddrop"),
-        edit: require("./edit"),
-        example: require("./example"),
-        help: require("./help"),
-        history: require("./history"),
-        keyevents: require("./keyevents"),
-        layers: require("./layers"),
-        layerEffects: require("./layereffects"),
-        libraries: require("./libraries"),
-        menu: require("./menu"),
-        policy: require("./policy"),
-        preferences: require("./preferences"),
-        search: require("./search"),
-        shapes: require("./shapes"),
-        shortcuts: require("./shortcuts"),
-        superselect: require("./superselect"),
-        tools: require("./tools"),
-        transform: require("./transform"),
-        type: require("./type"),
-        ui: require("./ui")
-        
-    };
+    var React = require("react"),
+        Immutable = require("immutable");
+
+    var Datalist = require("jsx!js/jsx/shared/Datalist");
+    // var Gutter = require("jsx!js/jsx/shared/Gutter"),
+    //     Label = require("jsx!js/jsx/shared/Label"),
+    //     strings = require("i18n!nls/strings");
+
+    var LibraryList = React.createClass({
+
+        render: function () {
+            return (
+                <Datalist
+                    list={"libraries"}
+                    disabled={false}
+                    className="dialog-blendmodes"
+                    options={Immutable.List()}
+                    value={""}
+                    size="column-12" />
+            );
+        }
+    });
+
+    module.exports = LibraryList;
 });

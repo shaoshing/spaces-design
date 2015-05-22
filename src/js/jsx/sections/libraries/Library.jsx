@@ -24,31 +24,42 @@
 define(function (require, exports, module) {
     "use strict";
 
-    // namespaced raw (unsynchronized) actions
-    module.exports = {
-        application: require("./application"),
-        dialog: require("./dialog"),
-        documents: require("./documents"),
-        draganddrop: require("./draganddrop"),
-        edit: require("./edit"),
-        example: require("./example"),
-        help: require("./help"),
-        history: require("./history"),
-        keyevents: require("./keyevents"),
-        layers: require("./layers"),
-        layerEffects: require("./layereffects"),
-        libraries: require("./libraries"),
-        menu: require("./menu"),
-        policy: require("./policy"),
-        preferences: require("./preferences"),
-        search: require("./search"),
-        shapes: require("./shapes"),
-        shortcuts: require("./shortcuts"),
-        superselect: require("./superselect"),
-        tools: require("./tools"),
-        transform: require("./transform"),
-        type: require("./type"),
-        ui: require("./ui")
-        
-    };
+    var React = require("react"),
+        Fluxxor = require("fluxxor"),
+        FluxMixin = Fluxxor.FluxMixin(React);
+
+    var os = require("adapter/os");
+
+    var synchronization = require("js/util/synchronization");
+
+    var Library = React.createClass({
+        mixins: [FluxMixin],
+
+        componentWillMount: function () {
+            this._setTooltipThrottled = synchronization.throttle(os.setTooltip, os, 500);
+        },
+
+        /**
+         * Selects the content of the input on focus.
+         * 
+         * @private
+         * @param {SyntheticEvent} event
+         */
+        _handleFocus: function (event) {
+            event.target.scrollIntoViewIfNeeded();
+            if (this.props.onFocus) {
+                this.props.onFocus(event);
+            }
+        },
+
+        render: function () {
+            return (
+                <div >
+                    PUT LIBRARY HERE
+                </div>
+            );
+        }
+    });
+
+    module.exports = Library;
 });
