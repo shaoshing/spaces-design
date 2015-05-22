@@ -112,8 +112,12 @@ define(function (require, exports, module) {
             libraryTwo.elements = itemsTwo;
 
 
-            this.libraries = [libraryOne, libraryTwo];
+            this._libraries = [libraryOne, libraryTwo];
             this.emit("change");
+        },
+
+        getLibraries: function () {
+            return this._libraries;
         }
     });
 

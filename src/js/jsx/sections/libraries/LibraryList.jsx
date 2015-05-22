@@ -35,15 +35,64 @@ define(function (require, exports, module) {
 
     var LibraryList = React.createClass({
 
+        /**
+         * Handles the item selection
+         * Later on, we'll have "add new library" item in this list
+         *
+         * @private
+         * @param {string} libraryID Selected item ID
+         */
+        _handleChange: function (libraryID) {
+            this.props.onLibraryChange(libraryID);
+        },
+
+        /**
+         * Given the libraries, creates the datalist friendly
+         * options for the library picker
+         *
+         * @param {Array.<AdobeLibraryComposite>} libraries
+         *
+         * @private
+         * @return {{title: String, id: string}}
+         */
+        _getLibraryList: function (libraries) {
+            var options = libraries.map(function (library) {
+                return {
+                    title: library.name,
+                    id: library.id
+                };
+            });
+
+            // options.push({
+            //     title: "-------------",
+            //     id: "divider"
+            // });
+
+            // options.push({
+            //     title: "Create new library",
+            //     id: "newLibrary"
+            // });
+
+            return Immutable.List(options);
+        },
+
         render: function () {
+            var libraryOptions = this._getLibraryList(this.props.libraries);
+            var libraryName = "";
+
+            if (!libraryOptions.isEmpty()) {
+                libraryName = libraryOptions.first().title;
+            }
+
             return (
                 <Datalist
                     list={"libraries"}
                     disabled={false}
-                    className="dialog-blendmodes"
-                    options={Immutable.List()}
-                    value={""}
-                    size="column-12" />
+                    className="dialog-libraries"
+                    options={libraryOptions}
+                    value={libraryName}
+                    size="column-12"
+                    onChange={this._handleChange} />
             );
         }
     });

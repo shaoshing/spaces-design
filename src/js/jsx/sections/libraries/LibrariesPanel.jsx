@@ -26,6 +26,9 @@ define(function (require, exports, module) {
     "use strict";
 
     var React = require("react"),
+        Fluxxor = require("fluxxor"),
+        FluxMixin = Fluxxor.FluxMixin(React),
+        StoreWatchMixin = Fluxxor.StoreWatchMixin,
         classnames = require("classnames");
 
     var TitleHeader = require("jsx!js/jsx/shared/TitleHeader"),
@@ -38,6 +41,23 @@ define(function (require, exports, module) {
         strings = require("i18n!nls/strings");
 
     var LibrariesPanel = React.createClass({
+        mixins: [FluxMixin, StoreWatchMixin("library")],
+
+        getInitialState: function () {
+            return ({
+                selectedLibrary: null
+            });
+        },
+
+        getStateFromFlux: function () {
+            var libraryStore = this.getFlux().store("library"),
+                libraries = libraryStore.getLibraries();
+
+            return {
+                libraries: libraries
+            };
+        },
+
         /**
          * A throttled version of os.setTooltip
          *
@@ -67,7 +87,15 @@ define(function (require, exports, module) {
             this._setTooltipThrottled("");
         },
 
+        _handleLibraryChange: function (libraryID) {
+            this.setState({
+                selectedLibrary: libraryID
+            });
+        },
+
         render: function () {
+            var libraries = this.state.libraries;
+
             var containerClasses = classnames({
                 "section-container": true,
                 "section-container__collapsed": !this.props.visible
@@ -82,7 +110,11 @@ define(function (require, exports, module) {
             var containerContents = this.props.visible && !this.props.disabled && (
                 <div>
                     <div className="formline">
-                        <LibraryList />
+                        <LibraryList
+                            ref="libraryList"
+                            libraries={libraries}
+                            onLibraryChange={this._handleLibraryChange}
+                        />
                         <SplitButtonList>
                             <SplitButtonItem
                                 title={strings.TOOLTIPS.GRID_MODE}
@@ -96,7 +128,10 @@ define(function (require, exports, module) {
                                 />
                         </SplitButtonList>
                     </div>
-                    <Library />
+                    <Library 
+                        libraries={libraries}
+                        selected={this.state.selectedLibrary}
+                    />
                     <LibraryBar />
                 </div>
             );
