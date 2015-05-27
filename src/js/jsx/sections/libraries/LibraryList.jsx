@@ -80,8 +80,8 @@ define(function (require, exports, module) {
             var libraryOptions = this._getLibraryList(this.props.libraries);
             var libraryName = "";
 
-            if (!libraryOptions.isEmpty()) {
-                libraryName = libraryOptions.first().title;
+            if (this.props.selected) {
+                libraryName = this.props.selected.name;
             }
 
             return (

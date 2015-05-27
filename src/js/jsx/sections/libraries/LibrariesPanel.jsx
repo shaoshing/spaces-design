@@ -105,6 +105,7 @@ define(function (require, exports, module) {
                         <LibraryList
                             ref="libraryList"
                             libraries={libraries}
+                            selected={currentLibrary}
                             onLibraryChange={this._handleLibraryChange}
                         />
                         <SplitButtonList>
