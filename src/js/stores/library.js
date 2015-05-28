@@ -41,7 +41,7 @@ define(function (require, exports, module) {
         
         initialize: function () {
             this.bindActions(
-                events.libraries.FAKE_DATA, this._handleFakeData
+                events.libraries.LIBRARIES_UPDATED, this._handleLibraryData
             );
 
             this._handleReset();
@@ -56,63 +56,9 @@ define(function (require, exports, module) {
             this._libraries = [];
         },
 
-        _handleFakeData: function () {
-            var libraryOne = {
-                    name: "Test Library 1",
-                    id: "00001",
-                    elements: []
-                },
-                libraryTwo = {
-                    name: "Test Library 2",
-                    id: "00002",
-                    elements: []
-                },
-                itemsOne = [
-                    {
-                        type: "color",
-                        name: "Red",
-                        representations: ["application/vnd.adobe.element.color+dcx"],
-                        library: libraryOne
-                    },
-                    {
-                        type: "color",
-                        name: "Green",
-                        representations: ["application/vnd.adobe.element.color+dcx"],
-                        library: libraryOne
-                    },
-                    {
-                        type: "textstyle",
-                        name: "Windings",
-                        representations: ["application/vnd.adobe.element.characterstyle+dcx"],
-                        library: libraryOne
-                    }
-                ],
-                itemsTwo = [
-                    {
-                        type: "color",
-                        name: "Green",
-                        representations: ["application/vnd.adobe.element.color+dcx"],
-                        library: libraryTwo
-                    },
-                    {
-                        type: "brush",
-                        name: "Bristles",
-                        representations: ["application/vnd.adobe.element.brush+dcx"],
-                        library: libraryTwo
-                    },
-                    {
-                        type: "image",
-                        name: "The Moon",
-                        representations: ["application/vnd.adobe.element.image+dcx"],
-                        library: libraryTwo
-                    }
-                ];
+        _handleLibraryData: function (payload) {
+            this._libraries = payload.libraries;
 
-            libraryOne.elements = itemsOne;
-            libraryTwo.elements = itemsTwo;
-
-
-            this._libraries = [libraryOne, libraryTwo];
             this.emit("change");
         },
 

@@ -146,7 +146,7 @@ define(function (require, exports, module) {
             MOVE_AND_CHECK_BOUNDS: "moveAndCheckBounds"
         },
         libraries: {
-            FAKE_DATA: "librariesFakeData"
+            LIBRARIES_UPDATED: "librariesUpdated"
         }
     };
 });

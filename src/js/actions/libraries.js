@@ -28,7 +28,8 @@ define(function (require, exports) {
         CCLibraries = require("file://shared/libs/cc-libraries-api.min.js"),
         descriptor = require("adapter/ps/descriptor");
 
-    var events = require("../events");
+    var events = require("../events"),
+        libraries = Promise.promisifyAll(CCLibraries);
 
     var _accessToken = null;
 
@@ -71,19 +72,15 @@ define(function (require, exports) {
             getAccessToken: getAccessToken
         };
         
-        CCLibraries.loadLibraryCollection(options, function (err, libraryCollection) {
-            if (err) {
-                console.log(err);
-                return;
-            }
-            // Print out the names of all the libraries:
-            libraryCollection.libraries.forEach(function (library) {
-                console.log(library.name);
+        return libraries.loadLibraryCollectionAsync(options)
+            .bind(this)
+            .then(function (libraryCollection) {
+                // Print out the names of all the libraries:
+                var payload = {
+                    libraries: libraryCollection.libraries
+                };
+                this.dispatch(events.libraries.LIBRARIES_UPDATED, payload);
             });
-        });
-        this.dispatch(events.libraries.FAKE_DATA, {});
-
-        return Promise.resolve();
     };
     afterStartup.reads = [];
     afterStartup.writes = [];
