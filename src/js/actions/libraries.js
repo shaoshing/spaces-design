@@ -25,7 +25,7 @@ define(function (require, exports) {
     "use strict";
 
     var Promise = require("bluebird"),
-        CCLibraries = require("file://shared/libs/cc-libraries-api-min.js"),
+        CCLibraries = require("file://shared/libs/cc-libraries-api.min.js"),
         descriptor = require("adapter/ps/descriptor");
 
     var events = require("../events");
@@ -36,11 +36,7 @@ define(function (require, exports) {
         if (_accessToken) {
             callback(null, _accessToken);
         } else {
-            descriptor.getProperty("application", "imsStatus")
-                .then(function (imsStatus) {
-                    _accessToken = imsStatus._value.imsAccessToken;
-                    callback(null, imsStatus._value.imsAccessToken);
-                });
+            throw new Error("Access token not ready");
         }
     };
 
@@ -52,9 +48,13 @@ define(function (require, exports) {
         };
 
         CCLibraries.configure({}, {
-            STORAGE_API_KEY: "PhotoshopSpacesLibrary1"
+            STORAGE_API_KEY: "CreativeCloudWeb1"
         });
-        return Promise.resolve();
+
+        return descriptor.getProperty("application", "imsStatus")
+            .then(function (imsStatus) {
+                _accessToken = imsStatus._value.imsAccessToken;
+            })
     };
     beforeStartup.reads = [];
     beforeStartup.writes = [];
@@ -67,6 +67,7 @@ define(function (require, exports) {
     var afterStartup = function () {
         var options = {
             STORAGE_HOSTNAME: "cc-api-storage-stage.adobe.io",
+            WAIT_FOR: "all",
             getAccessToken: getAccessToken
         };
         
