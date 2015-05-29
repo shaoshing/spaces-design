@@ -31,7 +31,8 @@ define(function (require, exports) {
     var events = require("../events"),
         libraries = Promise.promisifyAll(CCLibraries);
 
-    var _accessToken = null;
+    var _accessToken = null,
+        _userGUID = null;
 
     var getAccessToken = function (callback) {
         if (_accessToken) {
@@ -44,17 +45,18 @@ define(function (require, exports) {
     var beforeStartup = function () {
         var dependencies = {
             vulcanCall: function (requestType, requestPayload, responseType, callback) {
-                debugger;
+                callback({port: 61826});
             }
         };
 
-        CCLibraries.configure({}, {
-            STORAGE_API_KEY: "CreativeCloudWeb1"
+        CCLibraries.configure(dependencies, {
+            SHARED_LOCAL_STORAGE: true
         });
 
         return descriptor.getProperty("application", "imsStatus")
             .then(function (imsStatus) {
                 _accessToken = imsStatus._value.imsAccessToken;
+                _userGUID = imsStatus._value.user;
             })
     };
     beforeStartup.reads = [];
@@ -69,13 +71,13 @@ define(function (require, exports) {
         var options = {
             STORAGE_HOSTNAME: "cc-api-storage-stage.adobe.io",
             WAIT_FOR: "all",
+            USER_GUID: _userGUID,
             getAccessToken: getAccessToken
         };
         
         return libraries.loadLibraryCollectionAsync(options)
             .bind(this)
             .then(function (libraryCollection) {
-                // Print out the names of all the libraries:
                 var payload = {
                     libraries: libraryCollection.libraries
                 };
