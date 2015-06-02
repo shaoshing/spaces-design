@@ -45,7 +45,7 @@ define(function (require, exports) {
     var beforeStartup = function () {
         var dependencies = {
             vulcanCall: function (requestType, requestPayload, responseType, callback) {
-                callback({port: 61826});
+                callback("{port: 12666}");
             }
         };
 
