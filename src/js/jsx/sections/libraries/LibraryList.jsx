@@ -92,6 +92,7 @@ define(function (require, exports, module) {
                     options={libraryOptions}
                     value={libraryName}
                     size="column-12"
+                    live={false}
                     onChange={this._handleChange} />
             );
         }

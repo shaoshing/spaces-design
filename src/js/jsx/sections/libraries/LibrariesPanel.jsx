@@ -82,11 +82,16 @@ define(function (require, exports, module) {
             this.setState({
                 selectedLibrary: libraryID
             });
+
+
+            this.getFlux().actions.libraries.prepareLibrary(libraryID);
         },
 
         render: function () {
-            var libraries = this.state.libraries,
-                currentLibrary = _.find(libraries, "id", this.state.selectedLibrary);
+            var libraryStore = this.getFlux().store("library"),
+                libraries = this.state.libraries,
+                currentLibrary = _.find(libraries, "id", this.state.selectedLibrary),
+                currentLibraryItems = libraryStore.getLibraryItems(this.state.selectedLibrary);
 
             var containerClasses = classnames({
                 "section-container": true,
@@ -122,7 +127,7 @@ define(function (require, exports, module) {
                         </SplitButtonList>
                     </div>
                     <Library
-                        library={currentLibrary}
+                        items={currentLibraryItems}
                     />
                     <LibraryBar />
                 </div>

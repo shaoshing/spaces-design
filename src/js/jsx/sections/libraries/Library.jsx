@@ -52,13 +52,28 @@ define(function (require, exports, module) {
             }
         },
 
-        render: function () {
-            var currentLibrary = this.props.library;
+        _getLibraryItems: function (items) {
+            if (!items) {
+                return null;
+            }
 
-            
+            var elements = items.map(function (element) {
+                return (
+                    <div>
+                        <img src={element.renditionPath} />
+                    </div>
+                );
+            });
+
+            return elements;
+        },
+
+        render: function () {
+            var items = this._getLibraryItems(this.props.items);
+
             return (
                 <div>
-                    {currentLibrary ? currentLibrary.name : ""}
+                    {items}
                 </div>
             );
         }

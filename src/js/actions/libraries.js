@@ -25,27 +25,72 @@ define(function (require, exports) {
     "use strict";
 
     var Promise = require("bluebird"),
-        CCLibraries = require("file://shared/libs/cc-libraries-api.min.js"),
+        CCLibraries = require("ccLibraries"),
+        Immutable = require("immutable"),
         descriptor = require("adapter/ps/descriptor");
 
-    var events = require("../events"),
-        libraries = Promise.promisifyAll(CCLibraries);
+    var events = require("../events");
 
     var _accessToken = null,
         _userGUID = null;
 
-    var getAccessToken = function (callback) {
-        if (_accessToken) {
-            callback(null, _accessToken);
-        } else {
-            throw new Error("Access token not ready");
+    // var getAccessToken = function (callback) {
+    //     if (_accessToken) {
+    //         callback(null, _accessToken);
+    //     } else {
+    //         throw new Error("Access token not ready");
+    //     }
+    // };
+
+    /**
+     * Given a library instance, will prepare the elements of the library
+     * in a way we can use them in LibraryPanel
+     *
+     * For now, we grab: name, type, displayName, reference, and rendition path
+     *
+     * Because rendition path is async, we need this as an action
+     *
+     * @param {number} id ID of library to prepare
+     *
+     * @return {Immutable.List<Object>} [description]
+     */
+    var prepareLibrary = function (id) {
+        var library = this.flux.store("library").getLibraryByID(id);
+
+        if (!library || library.elements.length === 0) {
+            return Immutable.List();
         }
+
+        var firstItem = library.elements[0],
+            getRenditionAsync = Promise.promisify(firstItem.getRenditionPath);
+        
+        return Promise.map(library.elements, function (element) {
+            return getRenditionAsync.call(element, 100)
+                .then(function (renditionPath) {
+                    return {
+                        name: element.name,
+                        type: element.type,
+                        displayName: element.displayName,
+                        reference: element.getReference(),
+                        renditionPath: renditionPath
+                    };
+                });
+        }).bind(this).then(function (itemList) {
+            var payload = {
+                library: library,
+                elements: itemList
+            };
+
+            return this.dispatchAsync(events.libraries.LIBRARY_PREPARED, payload);
+        });
     };
+    prepareLibrary.reads = [];
+    prepareLibrary.writes = [];
 
     var beforeStartup = function () {
         var dependencies = {
             vulcanCall: function (requestType, requestPayload, responseType, callback) {
-                callback("{port: 12666}");
+                callback(JSON.stringify({ port: 12666 }));
             }
         };
 
@@ -55,9 +100,9 @@ define(function (require, exports) {
 
         return descriptor.getProperty("application", "imsStatus")
             .then(function (imsStatus) {
-                _accessToken = imsStatus._value.imsAccessToken;
-                _userGUID = imsStatus._value.user;
-            })
+                _accessToken = imsStatus.imsAccessToken;
+                _userGUID = imsStatus.user;
+            });
     };
     beforeStartup.reads = [];
     beforeStartup.writes = [];
@@ -68,25 +113,24 @@ define(function (require, exports) {
      * @return {Promise}
      */
     var afterStartup = function () {
-        var options = {
-            STORAGE_HOSTNAME: "cc-api-storage-stage.adobe.io",
-            WAIT_FOR: "all",
-            USER_GUID: _userGUID,
-            getAccessToken: getAccessToken
-        };
+        // var options = {
+        //     STORAGE_HOSTNAME: "cc-api-storage-stage.adobe.io",
+        //     WAIT_FOR: "all",
+        //     USER_GUID: _userGUID,
+        //     getAccessToken: getAccessToken
+        // };
         
-        return libraries.loadLibraryCollectionAsync(options)
-            .bind(this)
-            .then(function (libraryCollection) {
-                var payload = {
-                    libraries: libraryCollection.libraries
-                };
-                this.dispatch(events.libraries.LIBRARIES_UPDATED, payload);
-            });
+        var libraryCollection = CCLibraries.getLoadedCollections();
+
+        var payload = {
+            libraries: libraryCollection[0].libraries
+        };
+        return this.dispatchAsync(events.libraries.LIBRARIES_UPDATED, payload);
     };
     afterStartup.reads = [];
     afterStartup.writes = [];
 
     exports.beforeStartup = beforeStartup;
     exports.afterStartup = afterStartup;
+    exports.prepareLibrary = prepareLibrary;
 });

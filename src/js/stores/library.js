@@ -24,7 +24,8 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var Fluxxor = require("fluxxor");
+    var Fluxxor = require("fluxxor"),
+        _ = require("lodash");
 
     var events = require("../events");
 
@@ -38,10 +39,16 @@ define(function (require, exports, module) {
          * @type {AdobeLibraryCollection}
          */
         _libraries: null,
+
+        /**
+         * @type {{id: Array.<Item>}}
+         */
+        _libraryItems: null,
         
         initialize: function () {
             this.bindActions(
-                events.libraries.LIBRARIES_UPDATED, this._handleLibraryData
+                events.libraries.LIBRARIES_UPDATED, this._handleLibraryData,
+                events.libraries.LIBRARY_PREPARED, this._handleLibraryPrepared
             );
 
             this._handleReset();
@@ -54,6 +61,7 @@ define(function (require, exports, module) {
          */
         _handleReset: function () {
             this._libraries = [];
+            this._libraryItems = {};
         },
 
         _handleLibraryData: function (payload) {
@@ -62,8 +70,22 @@ define(function (require, exports, module) {
             this.emit("change");
         },
 
+        _handleLibraryPrepared: function (payload) {
+            this._libraryItems[payload.library.id] = payload.elements;
+
+            this.emit("change");
+        },
+
         getLibraries: function () {
             return this._libraries;
+        },
+
+        getLibraryByID: function (id) {
+            return _.find(this._libraries, "id", id);
+        },
+
+        getLibraryItems: function (id) {
+            return this._libraryItems[id];
         }
     });
 
