@@ -34,14 +34,6 @@ define(function (require, exports) {
     var _accessToken = null,
         _userGUID = null;
 
-    // var getAccessToken = function (callback) {
-    //     if (_accessToken) {
-    //         callback(null, _accessToken);
-    //     } else {
-    //         throw new Error("Access token not ready");
-    //     }
-    // };
-
     /**
      * Given a library instance, will prepare the elements of the library
      * in a way we can use them in LibraryPanel
@@ -98,7 +90,7 @@ define(function (require, exports) {
             SHARED_LOCAL_STORAGE: true
         });
 
-        return descriptor.getProperty("application", "imsStatus")
+        return descriptor.getProperty("application", "designSpaceLibrariesIMSInfo")
             .then(function (imsStatus) {
                 _accessToken = imsStatus.imsAccessToken;
                 _userGUID = imsStatus.user;

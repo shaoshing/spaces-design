@@ -27,7 +27,7 @@ require.config({
     baseUrl: ".",
     packages: [{ name: "adapter", location: "../bower_components/spaces-adapter/src" }],
     paths: {
-        "ccLibraries": "../bower_components/ccLibraries/cc-libraries-api",
+        "ccLibraries": "../bower_components/ccLibraries/cc-libraries-api.min",
         "bluebird": "../bower_components/bluebird/js/browser/bluebird",
         "eventEmitter": "../bower_components/eventEmitter/EventEmitter",
         "lodash": "../bower_components/lodash/lodash",
