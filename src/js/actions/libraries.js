@@ -49,15 +49,24 @@ define(function (require, exports) {
     var prepareLibrary = function (id) {
         var library = this.flux.store("library").getLibraryByID(id);
 
-        if (!library || library.elements.length === 0) {
-            return Immutable.List();
+        if (!library) {
+            return Promise.reject();
+        }
+
+        var payload = {
+                library: library,
+                elements: []
+            };
+
+        if (library.elements.length === 0) {
+            return this.dispatchAsync(events.libraries.LIBRARY_PREPARED, payload);
         }
 
         var firstItem = library.elements[0],
             getRenditionAsync = Promise.promisify(firstItem.getRenditionPath);
         
         return Promise.map(library.elements, function (element) {
-            return getRenditionAsync.call(element, 100)
+            return getRenditionAsync.call(element, 40)
                 .then(function (renditionPath) {
                     return {
                         name: element.name,
@@ -68,11 +77,7 @@ define(function (require, exports) {
                     };
                 });
         }).bind(this).then(function (itemList) {
-            var payload = {
-                library: library,
-                elements: itemList
-            };
-
+            payload.elements = itemList;
             return this.dispatchAsync(events.libraries.LIBRARY_PREPARED, payload);
         });
     };
@@ -113,6 +118,10 @@ define(function (require, exports) {
         // };
         
         var libraryCollection = CCLibraries.getLoadedCollections();
+
+        if (!libraryCollection) {
+            return Promise.resolve();
+        }
 
         var payload = {
             libraries: libraryCollection[0].libraries
