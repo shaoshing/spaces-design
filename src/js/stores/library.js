@@ -25,6 +25,7 @@ define(function (require, exports, module) {
     "use strict";
 
     var Fluxxor = require("fluxxor"),
+        Immutable = require("immutable"),
         _ = require("lodash");
 
     var events = require("../events");
@@ -36,12 +37,12 @@ define(function (require, exports, module) {
     var LibraryStore = Fluxxor.createStore({
         
         /**
-         * @type {AdobeLibraryCollection}
+         * @type {Immutable.Map<number, AdobeLibraryComposite>}
          */
         _libraries: null,
 
         /**
-         * @type {{id: Array.<Item>}}
+         * @type {Immutable.Map<number, Immutable.Iterable<AdobeLibraryElement>>}
          */
         _libraryItems: null,
         
@@ -60,32 +61,71 @@ define(function (require, exports, module) {
          * @private
          */
         _handleReset: function () {
-            this._libraries = [];
-            this._libraryItems = {};
+            this._libraries = Immutable.Map();
+            this._libraryItems = Immutable.Map();
         },
 
+        /**
+         * Handles a library collection load
+         *
+         * @private
+         * @param {{libraries: Array.<AdobeLibraryComposite}} payload
+         */
         _handleLibraryData: function (payload) {
-            this._libraries = payload.libraries;
+            var libraries = payload.libraries,
+                libraryIDs = _.pluck(libraries, "id"),
+                zippedList = _.zip(libraryIDs, libraries);
 
+            this._libraries = Immutable.Map(zippedList);
+            
             this.emit("change");
         },
 
+        /**
+         * Handles a library elements renditions prepared
+         *
+         * @private
+         * @param {Object} payload
+         * @param {AdobeLibraryComposite} payload.library Owner library
+         * @param {Array.<AdobeLibraryElement>} payload.elements
+         */
         _handleLibraryPrepared: function (payload) {
-            this._libraryItems[payload.library.id] = payload.elements;
+            var libraryElements = Immutable.List(payload.elements);
+
+            this._libraryItems = this._libraryItems.set(payload.library.id, Immutable.List(libraryElements));
 
             this.emit("change");
         },
 
+        /**
+         * Returns all loaded libraries
+         *
+         * @return {Immutable.Iterable<AdobeLibraryComposite>}
+         */
         getLibraries: function () {
             return this._libraries;
         },
 
+        /**
+         * Returns the Library with given ID, the library needs to be loaded first
+         *
+         * @param {string} id Library GUID
+         *
+         * @return {AdobeLibraryComposite}
+         */
         getLibraryByID: function (id) {
-            return _.find(this._libraries, "id", id);
+            return this._libraries.get(id);
         },
 
+        /**
+         * Returns the elements in the library
+         *
+         * @param {string} id Library GUID
+         *
+         * @return {Immutable.Iterable<AdobeLibraryElement>}
+         */
         getLibraryItems: function (id) {
-            return this._libraryItems[id];
+            return this._libraryItems.get(id);
         }
     });
 

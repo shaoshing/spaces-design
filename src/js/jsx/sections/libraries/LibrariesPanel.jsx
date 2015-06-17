@@ -29,8 +29,7 @@ define(function (require, exports, module) {
         Fluxxor = require("fluxxor"),
         FluxMixin = Fluxxor.FluxMixin(React),
         StoreWatchMixin = Fluxxor.StoreWatchMixin,
-        classnames = require("classnames"),
-        _ = require("lodash");
+        classnames = require("classnames");
 
     var TitleHeader = require("jsx!js/jsx/shared/TitleHeader"),
         LibraryList = require("jsx!./LibraryList"),
@@ -90,7 +89,7 @@ define(function (require, exports, module) {
         render: function () {
             var libraryStore = this.getFlux().store("library"),
                 libraries = this.state.libraries,
-                currentLibrary = _.find(libraries, "id", this.state.selectedLibrary),
+                currentLibrary = libraries[this.state.selectedLibrary],
                 currentLibraryItems = libraryStore.getLibraryItems(this.state.selectedLibrary);
 
             var containerClasses = classnames({

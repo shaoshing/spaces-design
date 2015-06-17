@@ -25,8 +25,7 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var React = require("react"),
-        Immutable = require("immutable");
+    var React = require("react");
 
     var Datalist = require("jsx!js/jsx/shared/Datalist");
     // var Gutter = require("jsx!js/jsx/shared/Gutter"),
@@ -61,7 +60,7 @@ define(function (require, exports, module) {
                     title: library.name,
                     id: library.id
                 };
-            });
+            }).toList();
 
             // options.push({
             //     title: "-------------",
@@ -73,7 +72,7 @@ define(function (require, exports, module) {
             //     id: "newLibrary"
             // });
 
-            return Immutable.List(options);
+            return options;
         },
 
         render: function () {
