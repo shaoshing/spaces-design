@@ -25,7 +25,9 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var React = require("react");
+    var React = require("react"),
+        Fluxxor = require("fluxxor"),
+        FluxMixin = Fluxxor.FluxMixin(React);
 
     var Gutter = require("jsx!js/jsx/shared/Gutter"),
         SplitButton = require("jsx!js/jsx/shared/SplitButton"),
@@ -33,7 +35,12 @@ define(function (require, exports, module) {
         strings = require("i18n!nls/strings");
 
     var LibraryBar = React.createClass({
-        
+        mixins: [FluxMixin],
+
+        createNewElement: function () {
+            this.getFlux().actions.libraries.createElementFromSelectedLayer();
+        },
+
         render: function () {
             return (
                 <div className="formline">
@@ -41,6 +48,7 @@ define(function (require, exports, module) {
                         <SplitButtonItem
                             title={strings.TOOLTIPS.FLIP_HORIZONTAL}
                             iconId="flip-horizontal"
+                            onClick={this.createNewElement}
                             replaceWith="Next five are likely to be a new control"
                              />
                         <SplitButtonItem

@@ -27,10 +27,50 @@ define(function (require, exports) {
     var Promise = require("bluebird"),
         CCLibraries = require("ccLibraries");
 
-    var events = require("../events");
+    var descriptor = require("adapter/ps/descriptor"),
+        libraryAdapter = require("adapter/lib/libraries");
+
+    var events = require("../events"),
+        locks = require("../locks");
 
     // var _accessToken = null,
     //     _userGUID = null;
+
+    var createElementFromSelectedLayerCommand = function () {
+        var appStore = this.flux.store("application"),
+            libStore = this.flux.store("library"),
+            currentDocument = appStore.getCurrentDocument(),
+            currentLibrary = libStore.getCurrentLibrary(),
+            currentLayers = currentDocument.layers.selected;
+
+        if (currentLayers.count() !== 1) {
+            return Promise.resolve();
+        }
+
+        var currentLayer = currentLayers.first(),
+            IMAGE_ELEMENT_TYPE = "application/vnd.adobe.element.image+dcx",
+            REPRESENTATION_TYPE = "image/vnd.adobe.photoshop";
+
+        
+        currentLibrary.beginOperation();
+
+        var newElement = currentLibrary.createElement(currentLayer.name, IMAGE_ELEMENT_TYPE),
+            representation = newElement.createRepresentation(REPRESENTATION_TYPE, "primary");
+
+        var exportObj = libraryAdapter.exportLayer("/tmp/", "/tmp/preview.png", currentLayer.name);
+
+        return descriptor.playObject(exportObj)
+            .then(function (saveData) {
+                var path = saveData.in._path;
+
+                return Promise.fromNode(function (cb) {
+                    representation.updateContentFromPath(path, false, cb);
+                });
+            })
+            .finally(function () {
+                currentLibrary.endOperation();
+            });
+    };
 
     /**
      * Given a library instance, will prepare the elements of the library
@@ -128,7 +168,15 @@ define(function (require, exports) {
     afterStartup.reads = [];
     afterStartup.writes = [];
 
+    var createElementFromSelectedLayer = {
+        command: createElementFromSelectedLayerCommand,
+        reads: [locks.JS_DOC],
+        writes: []
+    };
+
     exports.beforeStartup = beforeStartup;
     exports.afterStartup = afterStartup;
     exports.prepareLibrary = prepareLibrary;
+
+    exports.createElementFromSelectedLayer = createElementFromSelectedLayer;
 });

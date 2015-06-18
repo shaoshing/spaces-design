@@ -82,7 +82,6 @@ define(function (require, exports, module) {
                 selectedLibrary: libraryID
             });
 
-
             this.getFlux().actions.libraries.prepareLibrary(libraryID);
         },
 

@@ -45,7 +45,12 @@ define(function (require, exports, module) {
          * @type {Immutable.Map<number, Immutable.Iterable<AdobeLibraryElement>>}
          */
         _libraryItems: null,
-        
+
+        /**
+         * @type {string}
+         */
+        _currentLibraryID: null,
+
         initialize: function () {
             this.bindActions(
                 events.libraries.LIBRARIES_UPDATED, this._handleLibraryData,
@@ -63,6 +68,7 @@ define(function (require, exports, module) {
         _handleReset: function () {
             this._libraries = Immutable.Map();
             this._libraryItems = Immutable.Map();
+            this._currentLibraryID = "";
         },
 
         /**
@@ -92,6 +98,7 @@ define(function (require, exports, module) {
         _handleLibraryPrepared: function (payload) {
             var libraryElements = Immutable.List(payload.elements);
 
+            this._currentLibraryID = payload.library.id;
             this._libraryItems = this._libraryItems.set(payload.library.id, Immutable.List(libraryElements));
 
             this.emit("change");
@@ -126,6 +133,15 @@ define(function (require, exports, module) {
          */
         getLibraryItems: function (id) {
             return this._libraryItems.get(id);
+        },
+
+        /**
+         * Returns the currently shown library
+         *
+         * @return {AdobeLibraryComposite}
+         */
+        getCurrentLibrary: function () {
+            return this._libraries.get(this._currentLibraryID);
         }
     });
 
