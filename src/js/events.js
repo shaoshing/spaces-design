@@ -147,7 +147,8 @@ define(function (require, exports, module) {
         },
         libraries: {
             LIBRARIES_UPDATED: "librariesUpdated",
-            LIBRARY_PREPARED: "libraryPrepared"
+            LIBRARY_PREPARED: "libraryPrepared",
+            CONNECTION_FAILED: "libraryConnectionFailed"
         }
     };
 });

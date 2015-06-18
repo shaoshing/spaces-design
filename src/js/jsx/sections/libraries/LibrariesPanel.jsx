@@ -35,6 +35,8 @@ define(function (require, exports, module) {
         LibraryList = require("jsx!./LibraryList"),
         LibraryBar = require("jsx!./LibraryBar"),
         Library = require("jsx!./Library"),
+        Button = require("jsx!js/jsx/shared/Button"),
+        SVGIcon = require("jsx!js/jsx/shared/SVGIcon"),
         SplitButton = require("jsx!js/jsx/shared/SplitButton"),
         SplitButtonList = SplitButton.SplitButtonList,
         SplitButtonItem = SplitButton.SplitButtonItem,
@@ -77,6 +79,11 @@ define(function (require, exports, module) {
             return true;
         },
 
+        _handleRefresh: function () {
+            this.getFlux().actions.libraries.beforeStartup();
+            this.getFlux().actions.libraries.afterStartup();
+        },
+
         _handleLibraryChange: function (libraryID) {
             this.setState({
                 selectedLibrary: libraryID
@@ -87,6 +94,7 @@ define(function (require, exports, module) {
 
         render: function () {
             var libraryStore = this.getFlux().store("library"),
+                connected = libraryStore.getConnectionStatus(),
                 libraries = this.state.libraries,
                 currentLibrary = libraries[this.state.selectedLibrary],
                 currentLibraryItems = libraryStore.getLibraryItems(this.state.selectedLibrary);
@@ -102,7 +110,10 @@ define(function (require, exports, module) {
                 "section__sibling-collapsed": !this.props.visibleSibling
             });
 
-            var containerContents = this.props.visible && !this.props.disabled && (
+            var containerContents;
+
+            if (connected) {
+                containerContents = this.props.visible && !this.props.disabled && (
                 <div>
                     <div className="formline">
                         <LibraryList
@@ -128,8 +139,22 @@ define(function (require, exports, module) {
                         items={currentLibraryItems}
                     />
                     <LibraryBar />
-                </div>
-            );
+                </div>);
+            } else {
+                containerContents = (
+                    <div>
+                        Can't connect to local library process!
+                         <Button
+                            title="Refresh"
+                            className="button-plus"
+                            onClick={this._handleRefresh}>
+                            <SVGIcon
+                                viewbox="0 0 12 12"
+                                CSSID="plus" />
+                        </Button>
+                    </div>
+                );
+            }
 
             return (
                 <section

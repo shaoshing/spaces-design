@@ -36,7 +36,7 @@ define(function (require, exports) {
     // var _accessToken = null,
     //     _userGUID = null;
 
-    var createElementFromSelectedLayerCommand = function () {
+    var createElementFromSelectedLayer = function () {
         var appStore = this.flux.store("application"),
             libStore = this.flux.store("library"),
             currentDocument = appStore.getCurrentDocument(),
@@ -71,6 +71,8 @@ define(function (require, exports) {
                 currentLibrary.endOperation();
             });
     };
+    createElementFromSelectedLayer.reads = [locks.JS_DOC];
+    createElementFromSelectedLayer.writes = [];
 
     /**
      * Given a library instance, will prepare the elements of the library
@@ -145,7 +147,7 @@ define(function (require, exports) {
         //     });
     };
     beforeStartup.reads = [];
-    beforeStartup.writes = [];
+    beforeStartup.writes = [locks.JS_LIBRARIES];
 
     /**
      * After startup, load the libraries
@@ -155,8 +157,8 @@ define(function (require, exports) {
     var afterStartup = function () {
         var libraryCollection = CCLibraries.getLoadedCollections();
 
-        if (!libraryCollection) {
-            return Promise.resolve();
+        if (!libraryCollection || !libraryCollection[0]) {
+            return this.dispatchAsync(events.libraries.CONNECTION_FAILED);
         }
 
         // FIXME: Do we eventually need to handle other collections?
@@ -165,14 +167,8 @@ define(function (require, exports) {
         };
         return this.dispatchAsync(events.libraries.LIBRARIES_UPDATED, payload);
     };
-    afterStartup.reads = [];
-    afterStartup.writes = [];
-
-    var createElementFromSelectedLayer = {
-        command: createElementFromSelectedLayerCommand,
-        reads: [locks.JS_DOC],
-        writes: []
-    };
+    afterStartup.reads = [locks.JS_LIBRARIES];
+    afterStartup.writes = [locks.JS_LIBRARIES];
 
     exports.beforeStartup = beforeStartup;
     exports.afterStartup = afterStartup;

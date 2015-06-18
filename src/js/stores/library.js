@@ -51,10 +51,13 @@ define(function (require, exports, module) {
          */
         _currentLibraryID: null,
 
+        _serviceConnected: null,
+
         initialize: function () {
             this.bindActions(
                 events.libraries.LIBRARIES_UPDATED, this._handleLibraryData,
-                events.libraries.LIBRARY_PREPARED, this._handleLibraryPrepared
+                events.libraries.LIBRARY_PREPARED, this._handleLibraryPrepared,
+                events.libraries.CONNECTION_FAILED, this._handleConnectionFailed
             );
 
             this._handleReset();
@@ -69,6 +72,13 @@ define(function (require, exports, module) {
             this._libraries = Immutable.Map();
             this._libraryItems = Immutable.Map();
             this._currentLibraryID = "";
+            this._serviceConnected = false;
+        },
+
+        _handleConnectionFailed: function () {
+            this._handleReset();
+
+            this.emit("change");
         },
 
         /**
@@ -83,6 +93,7 @@ define(function (require, exports, module) {
                 zippedList = _.zip(libraryIDs, libraries);
 
             this._libraries = Immutable.Map(zippedList);
+            this._serviceConnected = true;
             
             this.emit("change");
         },
@@ -142,6 +153,10 @@ define(function (require, exports, module) {
          */
         getCurrentLibrary: function () {
             return this._libraries.get(this._currentLibraryID);
+        },
+
+        getConnectionStatus: function () {
+            return this._serviceConnected;
         }
     });
 
