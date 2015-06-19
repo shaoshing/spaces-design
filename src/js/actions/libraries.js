@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2014 Adobe Systems Incorporated. All rights reserved.
- *  
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- *  
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 
 define(function (require, exports) {
@@ -28,6 +28,7 @@ define(function (require, exports) {
         CCLibraries = require("ccLibraries");
 
     var descriptor = require("adapter/ps/descriptor"),
+        docAdapter = require("adapter/lib/document"),
         libraryAdapter = require("adapter/lib/libraries");
 
     var events = require("../events"),
@@ -51,7 +52,6 @@ define(function (require, exports) {
             IMAGE_ELEMENT_TYPE = "application/vnd.adobe.element.image+dcx",
             REPRESENTATION_TYPE = "image/vnd.adobe.photoshop";
 
-        
         currentLibrary.beginOperation();
 
         var newElement = currentLibrary.createElement(currentLayer.name, IMAGE_ELEMENT_TYPE),
@@ -67,35 +67,54 @@ define(function (require, exports) {
                 return Promise.fromNode(function (cb) {
                     representation.updateContentFromPath(path, false, cb);
                 });
-            })
-            .finally(function () {
+            }).finally(function () {
                 currentLibrary.endOperation();
-            })
-            .then(function () {
+            }).then(function () {
                 var newRepresentation = newElement.getPrimaryRepresentation();
                 return Promise.fromNode(function (cb) {
                     newRepresentation.getContentPath(cb);
-                })
-            })
-            .then(function (path) {
+                });
+            }).then(function (path) {
                 var createObj = libraryAdapter.createElement(currentDocument.id, currentLayer.id, newElement, path);
                 return descriptor.playObject(createObj);
-            })
-            .then(function () {
+            }).then(function () {
                 return this.transfer(prepareLibrary, currentLibrary.id);
-            })
-            .then(function () {
+            }).then(function () {
                 this.flux.actions.documents.updateDocument();
-            })
-            // .then(function () {
-            //     var payload = {
-            //         element: newElement,
-            //         document: currentDocument,
-            //         layers: currentLayer
-            //     };
-            //     // WE ONLY LINK IF THE LAYER WAS A SMART OBJECT
-            //     return this.dispatchAsync(events.libraries.ELEMENT_CREATED_AND_LINKED, payload);
-            // });
+            });
+        // .then(function () {
+        //     var payload = {
+        //         element: newElement,
+        //         document: currentDocument,
+        //         layers: currentLayer
+        //     };
+        //     // WE ONLY LINK IF THE LAYER WAS A SMART OBJECT
+        //     return this.dispatchAsync(events.libraries.ELEMENT_CREATED_AND_LINKED, payload);
+        // });
+    };
+
+    var createLayerFromElementCommand = function (elementObj) {
+        var appStore = this.flux.store("application"),
+            libStore = this.flux.store("library"),
+            currentDocument = appStore.getCurrentDocument(),
+            currentLibrary = libStore.getCurrentLibrary();
+
+        if (!currentDocument || !currentLibrary) {
+            return Promise.resolve();
+        }
+
+        var docRef = docAdapter.referenceBy.id(currentDocument.id),
+            location = { x: 100, y: 100 },
+            element = currentLibrary.getElementById(elementObj.id),
+            representation = element.getPrimaryRepresentation();
+
+        return Promise.fromNode(function (cb) {
+            representation.getContentPath(cb);
+        }).then(function (path) {
+            var placeObj = libraryAdapter.placeElement(docRef, element, path, location);
+
+            return descriptor.playObject(placeObj);
+        });
     };
     createElementFromSelectedLayer.reads = [locks.JS_DOC, locks.JS_LIBRARIES];
     createElementFromSelectedLayer.writes = [locks.JS_LIBRARIES];
@@ -130,7 +149,7 @@ define(function (require, exports) {
 
         var firstItem = library.elements[0],
             getRenditionAsync = Promise.promisify(firstItem.getRenditionPath);
-        
+
         return Promise.map(library.elements, function (element) {
             return getRenditionAsync.call(element, 40)
                 .then(function (renditionPath) {
@@ -139,6 +158,7 @@ define(function (require, exports) {
                         type: element.type,
                         displayName: element.displayName,
                         reference: element.getReference(),
+                        id: element.id,
                         renditionPath: renditionPath
                     };
                 });
@@ -164,7 +184,7 @@ define(function (require, exports) {
         });
 
         return Promise.resolve();
-        
+
         // Currently unused
         // return descriptor.getProperty("application", "designSpaceLibrariesIMSInfo")
         //     .then(function (imsStatus) {
@@ -177,7 +197,7 @@ define(function (require, exports) {
 
     /**
      * After startup, load the libraries
-     * 
+     *
      * @return {Promise}
      */
     var afterStartup = function () {
@@ -196,9 +216,16 @@ define(function (require, exports) {
     afterStartup.reads = [locks.JS_LIBRARIES];
     afterStartup.writes = [locks.JS_LIBRARIES];
 
+    var createLayerFromElement = {
+        command: createLayerFromElementCommand,
+        reads: [locks.JS_LIBRARIES, locks.JS_DOC],
+        writes: [locks.JS_LIBRARIES, locks.JS_DOC]
+    };
+
     exports.beforeStartup = beforeStartup;
     exports.afterStartup = afterStartup;
     exports.prepareLibrary = prepareLibrary;
 
     exports.createElementFromSelectedLayer = createElementFromSelectedLayer;
+    exports.createLayerFromElement = createLayerFromElement;
 });
