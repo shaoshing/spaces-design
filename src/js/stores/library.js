@@ -37,6 +37,11 @@ define(function (require, exports, module) {
     var LibraryStore = Fluxxor.createStore({
         
         /**
+         * @type {AdobeLibraryCollection}
+         */
+        _libraryCollection: null,
+
+        /**
          * @type {Immutable.Map<number, AdobeLibraryComposite>}
          */
         _libraries: null,
@@ -56,6 +61,8 @@ define(function (require, exports, module) {
         initialize: function () {
             this.bindActions(
                 events.libraries.LIBRARIES_UPDATED, this._handleLibraryData,
+                events.libraries.LIBRARY_CREATED, this._handleLibraryCreated,
+                events.libraries.LIBRARY_REMOVED, this._handleLibraryRemoved,
                 events.libraries.LIBRARY_PREPARED, this._handleLibraryPrepared,
                 events.libraries.CONNECTION_FAILED, this._handleConnectionFailed
             );
@@ -85,7 +92,7 @@ define(function (require, exports, module) {
          * Handles a library collection load
          *
          * @private
-         * @param {{libraries: Array.<AdobeLibraryComposite}} payload
+         * @param {{libraries: Array.<AdobeLibraryComposite, collection: AdobeLibraryCollection}} payload
          */
         _handleLibraryData: function (payload) {
             var libraries = payload.libraries,
@@ -93,6 +100,7 @@ define(function (require, exports, module) {
                 zippedList = _.zip(libraryIDs, libraries);
 
             this._libraries = Immutable.Map(zippedList);
+            this._libraryCollection = payload.collection;
             this._serviceConnected = true;
             
             this.emit("change");
@@ -115,6 +123,23 @@ define(function (require, exports, module) {
             this.emit("change");
         },
 
+        _handleLibraryRemoved: function (payload) {
+            var id = payload.id;
+
+            this._libraries = this._libraries.delete(id);
+            this._libraryItems = this._libraryItems.delete(id);
+
+            this.emit("change");
+        },
+
+        _handleLibraryCreated: function (payload) {
+            var newLibrary = payload.library;
+
+            this._libraries = this._libraries.set(newLibrary.id, newLibrary);
+
+            this.emit("change");
+        },
+
         /**
          * Returns all loaded libraries
          *
@@ -122,6 +147,15 @@ define(function (require, exports, module) {
          */
         getLibraries: function () {
             return this._libraries;
+        },
+
+        /**
+         * Returns the loaded library collection
+         *
+         * @return {AdobeLibraryCollection}
+         */
+        getLibraryCollection: function () {
+            return this._libraryCollection;
         },
 
         /**

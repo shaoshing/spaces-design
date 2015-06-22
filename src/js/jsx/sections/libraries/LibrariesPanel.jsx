@@ -96,6 +96,14 @@ define(function (require, exports, module) {
             this.getFlux().actions.libraries.prepareLibrary(libraryID);
         },
 
+        _handleLibraryAdd: function () {
+            this.getFlux().actions.libraries.createLibrary("New Library");
+        },
+
+        _handleLibraryRemove: function () {
+            this.getFlux().actions.libraries.removeCurrentLibrary();
+        },
+
         render: function () {
             var libraryStore = this.getFlux().store("library"),
                 connected = libraryStore.getConnectionStatus(),
@@ -129,13 +137,15 @@ define(function (require, exports, module) {
                         <SplitButtonList>
                             <SplitButtonItem
                                 title={strings.TOOLTIPS.GRID_MODE}
-                                className="button-align-distribute"
-                                iconId="distribute-horizontally"
+                                className="button-plus"
+                                iconId="plus"
+                                onClick={this._handleLibraryAdd}
                                 />
                             <SplitButtonItem
                                 title={strings.TOOLTIPS.LIST_MODE}
-                                className="button-align-distribute"
+                                className="button-plus"
                                 iconId="distribute-vertically"
+                                onClick={this._handleLibraryRemove}
                                 />
                         </SplitButtonList>
                     </div>

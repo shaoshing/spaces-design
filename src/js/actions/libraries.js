@@ -92,8 +92,10 @@ define(function (require, exports) {
         //     return this.dispatchAsync(events.libraries.ELEMENT_CREATED_AND_LINKED, payload);
         // });
     };
+    createElementFromSelectedLayer.reads = [locks.JS_DOC, locks.JS_LIBRARIES];
+    createElementFromSelectedLayer.writes = [locks.JS_LIBRARIES];
 
-    var createLayerFromElementCommand = function (elementObj) {
+    var createLayerFromElement = function (elementObj) {
         var appStore = this.flux.store("application"),
             libStore = this.flux.store("library"),
             currentDocument = appStore.getCurrentDocument(),
@@ -116,9 +118,9 @@ define(function (require, exports) {
             return descriptor.playObject(placeObj);
         });
     };
-    createElementFromSelectedLayer.reads = [locks.JS_DOC, locks.JS_LIBRARIES];
-    createElementFromSelectedLayer.writes = [locks.JS_LIBRARIES];
-
+    createLayerFromElement.reads = [locks.JS_LIBRARIES, locks.JS_DOC];
+    createLayerFromElement.writes = [locks.JS_LIBRARIES, locks.JS_DOC];
+    
     /**
      * Given a library instance, will prepare the elements of the library
      * in a way we can use them in LibraryPanel
@@ -129,7 +131,7 @@ define(function (require, exports) {
      *
      * @param {number} id ID of library to prepare
      *
-     * @return {Immutable.List<Object>} [description]
+     * @return {Promise}
      */
     var prepareLibrary = function (id) {
         var library = this.flux.store("library").getLibraryByID(id);
@@ -167,8 +169,54 @@ define(function (require, exports) {
             return this.dispatchAsync(events.libraries.LIBRARY_PREPARED, payload);
         });
     };
-    prepareLibrary.reads = [];
+    prepareLibrary.reads = [locks.CC_LIBRARIES];
     prepareLibrary.writes = [locks.JS_LIBRARIES];
+
+    /**
+     * Creates a new library with the given name
+     *
+     * @param {string} name
+     * @return {Promise.<Library>} Resolves to the created library
+     */
+    var createLibraryCommand = function (name) {
+        var libStore = this.flux.store("library"),
+            libraryCollection = libStore.getLibraryCollection(),
+            newLibrary = libraryCollection.createLibrary(name);
+
+        return this.dispatchAsync(events.libraries.LIBRARY_CREATED, { library: newLibrary })
+            .then(function () {
+                return newLibrary;
+            });
+    };
+    createLibrary.reads = [];
+    createLibrary.writes = [locks.CC_LIBRARIES, locks.JS_LIBRARIES];
+
+    /** 
+     * Removes the current library from the collection
+     *
+     * @return {Promise}
+     */
+    var removeCurrentLibraryCommand = function () {
+        var libStore = this.flux.store("library"),
+            libraryCollection = libStore.getLibraryCollection(),
+            currentLibrary = libStore.getCurrentLibrary();
+
+        if (!libraryCollection || !currentLibrary) {
+            return Promise.resolve();
+        }
+
+        var payload = {
+            id: currentLibrary.id
+        };
+
+        return Promise.fromNode(function (cb) {
+            libraryCollection.removeLibrary(currentLibrary, cb);
+        }).bind(this).then(function () {
+            this.dispatchAsync(events.libraries.LIBRARY_REMOVED, payload);
+        });
+    };
+    removeCurrentLibrary.reads = [locks.CC_LIBRARIES, locks.JS_LIBRARIES];
+    removeCurrentLibrary.writes = [locks.CC_LIBRARIES, locks.JS_LIBRARIES];
 
     var beforeStartup = function () {
         var dependencies = {
@@ -209,22 +257,20 @@ define(function (require, exports) {
 
         // FIXME: Do we eventually need to handle other collections?
         var payload = {
-            libraries: libraryCollection[0].libraries
+            libraries: libraryCollection[0].libraries,
+            collection: libraryCollection[0]
         };
         return this.dispatchAsync(events.libraries.LIBRARIES_UPDATED, payload);
     };
     afterStartup.reads = [locks.JS_LIBRARIES];
     afterStartup.writes = [locks.JS_LIBRARIES];
 
-    var createLayerFromElement = {
-        command: createLayerFromElementCommand,
-        reads: [locks.JS_LIBRARIES, locks.JS_DOC],
-        writes: [locks.JS_LIBRARIES, locks.JS_DOC]
-    };
-
     exports.beforeStartup = beforeStartup;
     exports.afterStartup = afterStartup;
+    
     exports.prepareLibrary = prepareLibrary;
+    exports.createLibrary = createLibrary;
+    exports.removeCurrentLibrary = removeCurrentLibrary;
 
     exports.createElementFromSelectedLayer = createElementFromSelectedLayer;
     exports.createLayerFromElement = createLayerFromElement;
