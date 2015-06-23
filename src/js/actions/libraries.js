@@ -34,9 +34,6 @@ define(function (require, exports) {
     var events = require("../events"),
         locks = require("../locks");
 
-    // var _accessToken = null,
-    //     _userGUID = null;
-
     var createElementFromSelectedLayer = function () {
         var appStore = this.flux.store("application"),
             libStore = this.flux.store("library"),
@@ -220,9 +217,14 @@ define(function (require, exports) {
 
     var beforeStartup = function () {
         var dependencies = {
+            // Photoshop on startup will grab the port of the CC Library process and expose it to us
             vulcanCall: function (requestType, requestPayload, responseType, callback) {
-                // FIXME: Eventually we need to acquire the actual port, preferably exporting it through PS
-                callback(JSON.stringify({ port: 12666 }));
+                descriptor.getProperty("application", "designSpaceLibrariesIMSInfo")
+                    .then(function (imsInfo) {
+                        var port = imsInfo.port;
+
+                        callback(JSON.stringify({ port: port }));
+                    });
             }
         };
 
@@ -232,13 +234,6 @@ define(function (require, exports) {
         });
 
         return Promise.resolve();
-
-        // Currently unused
-        // return descriptor.getProperty("application", "designSpaceLibrariesIMSInfo")
-        //     .then(function (imsStatus) {
-        //         _accessToken = imsStatus.imsAccessToken;
-        //         _userGUID = imsStatus.user;
-        //     });
     };
     beforeStartup.reads = [];
     beforeStartup.writes = [locks.JS_LIBRARIES];
