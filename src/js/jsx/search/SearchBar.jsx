@@ -35,7 +35,7 @@ define(function (require, exports, module) {
         pathUtil = require("js/util/path"),
         collection = require("js/util/collection");
     
-    var MAX_OPTIONS = 5;
+    var MAX_OPTIONS = 10;
 
     var SearchBar = React.createClass({
         mixins: [FluxMixin],
@@ -432,16 +432,6 @@ define(function (require, exports, module) {
                     return false;
                 }
 
-                // Removing this for now because it makes search too broad
-                // If option has info, search for it with and without '/' characters
-                // Don't check each word individually because want search to preserve order of layer hierarchy
-                // var info = option.info ? option.info.toLowerCase() : "",
-                //     searchableInfo = info.concat(info.replace(/\//g, " "));
-                
-                // if (searchableInfo.indexOf(searchTerm) > -1) {
-                //     return true;
-                // }
-
                 // Check each word of search term for category and title
                 var useTerm = true,
                     title = option.title.toLowerCase(),
@@ -456,9 +446,7 @@ define(function (require, exports, module) {
                     if (_.isEqual(this.state.filter, option.category)) {
                         return false;
                     }
-                }
-
-                var searchTerms = searchTerm.split(" ");
+                }             
 
                 if (this.state.filter.length > 0) {
                     // All terms in this.state.filter must be in the option's category
@@ -479,6 +467,16 @@ define(function (require, exports, module) {
                     return true;
                 }
 
+                // If option has info, search for it with and without '/' characters
+                // Don't check each word individually because want search to preserve order of layer hierarchy
+                var info = option.displayInfo ? option.displayInfo.toLowerCase() : "",
+                    searchableInfo = info.concat(info.replace(/\//g, " "));
+                
+                if (searchableInfo.indexOf(searchTerm) > -1) {
+                    return true;
+                }
+                
+                var searchTerms = searchTerm.split(" ");
                 useTerm = false;
                 // At least one term in the search box must be in the option's title
                 _.forEach(searchTerms, function (term) {
