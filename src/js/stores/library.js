@@ -92,7 +92,7 @@ define(function (require, exports, module) {
          * Handles a library collection load
          *
          * @private
-         * @param {{libraries: Array.<AdobeLibraryComposite, collection: AdobeLibraryCollection}} payload
+         * @param {{libraries: Array.<AdobeLibraryComposite>, collection: AdobeLibraryCollection}} payload
          */
         _handleLibraryData: function (payload) {
             var libraries = payload.libraries,

@@ -175,7 +175,7 @@ define(function (require, exports) {
      * @param {string} name
      * @return {Promise.<Library>} Resolves to the created library
      */
-    var createLibraryCommand = function (name) {
+    var createLibrary = function (name) {
         var libStore = this.flux.store("library"),
             libraryCollection = libStore.getLibraryCollection(),
             newLibrary = libraryCollection.createLibrary(name);
@@ -193,7 +193,7 @@ define(function (require, exports) {
      *
      * @return {Promise}
      */
-    var removeCurrentLibraryCommand = function () {
+    var removeCurrentLibrary = function () {
         var libStore = this.flux.store("library"),
             libraryCollection = libStore.getLibraryCollection(),
             currentLibrary = libStore.getCurrentLibrary();
